@@ -11,36 +11,42 @@ class Anagrams():
         # collision management
         self.collision_list = []
 
+        # anagram list per word
+        self.anagram_list = []
+
     # find all anagrams for words in the file
-    def find_all_anagrams(self, file):
-        f = open(file, 'r')
-        for word in f.readlines():
-            d = {}
+    def find_all_anagrams(self, input, output):
+        outf = open(output, 'w')
+        inf = open(input, 'r')
+        counter = 0
+        for word in inf.readlines():
+            counter += 1
+            if counter == 1000:
+                return
+            elif counter % 20 == 0:
+                print counter
             word = word.strip('\n')
             # find anagrams for a word
             anagrams = self.find_anagrams(word)
-            # add anagrams to the hash table for the file
-            hash = self.get_hash(word)
-            while(self.hash_table[hash] != ''):
-                if self.hash_table[hash] == word:
-                    d[word] = anagrams
-                    self.hash_table[hash] = d
-                else:
-                    hash += 1
-        f.close()
-        return self.hash_table
+            # add anagrams to the file
+            outf.write(word + ": " + ", ".join(anagrams) + '\n')
+        inf.close()
+        outf.close()
+        return 
 
     # find anagrams for a word
     def find_anagrams(self, word):
+        if len(word) > 9:
+            return [word]
         anagrams = []
         # create permutations
-        permutations = self.get_permutations(word)
+        permutations = self.permutation_helper(word)
         for word in permutations:
             # get the hash code for word
             hash = self.get_hash(word)
             # check in hash table? append:
             while(self.hash_table[hash] != ''):
-                if self.hash_table[hash] == word:
+                if self.hash_table[hash] == word and anagrams.count(word) < 1:
                     anagrams.append(word)
                     break
                 else:
@@ -49,13 +55,22 @@ class Anagrams():
         return anagrams
             
     # find all the permutations for a word
-    def get_permutations(self, word):
-        # n!/(n-k)! = n! in this case
-        # TODO
-        permutations = []
-        word = list(word)
-
-        return permutations
+    # n!/(n-k)! = n! in this case
+    # if you want to make changes in the permutations
+    def permutation_helper(self, word):
+        if not word:
+            # empty list
+            return [word]
+        else:
+            temp = []
+            # for chars in word
+            for char in range(len(word)):
+                # part other than 'char'
+                part = word[:char] + word[char + 1:]
+                # permutation for the part too
+                for p in self.permutation_helper(part):
+                    temp.append(word[char] + p)
+            return temp
 
     # build hash table from a dictionary of 350,000 words
     def build_hash_table(self, file):
@@ -89,6 +104,10 @@ class Anagrams():
         self.hash_table[hashcode] = word
         return hashcode
 
+    def mergesort(self, input, output):
+        # find all same lettered words
+        pass
+
 # MAIN
 # 1. Find all the permutations
 # 2. Find hash code of all permutations
@@ -96,15 +115,14 @@ class Anagrams():
 # 4. Maybe add a cross checker with same alphabets
 if __name__ == '__main__':
     start = time.clock()
-    print "Start: " , start
-    d = "dictionary.txt"
+    d = "dict1"
     t = "dict1"
+    a = "anagram1"
 
     A = Anagrams()
     # build table
     A.build_hash_table(d)
-    # find permutations
-    A.find_anagrams(t)
-    # collisions range 2-3
-    print len(A.collision_list)
+    print "Hash Table: " , time.clock() - start
+    # find anagrams
+    print A.find_all_anagrams(t, a)
     print "End: " , time.clock() - start
